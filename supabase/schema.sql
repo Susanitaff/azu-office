@@ -68,3 +68,13 @@ create table if not exists integrations (
 insert into workspaces(name, kind)
 select 'Cami', 'personal'
 where not exists (select 1 from workspaces);
+
+-- Seguridad: las tablas no se exponen directamente al navegador.
+-- Azu Office accederá mediante su API de servidor usando credenciales privadas.
+alter table workspaces enable row level security;
+alter table memories enable row level security;
+alter table tasks enable row level security;
+alter table documents enable row level security;
+alter table action_logs enable row level security;
+alter table integrations enable row level security;
+
