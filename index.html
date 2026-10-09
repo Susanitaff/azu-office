@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Azu Office</title>
+  <style>
+    :root{--bg:#f4f1ea;--panel:#fff;--ink:#20231f;--muted:#777b74;--green:#174f32;--line:#e4dfd3}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
+    .shell{max-width:960px;margin:0 auto;min-height:100vh;padding:28px}
+    .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .brand{font-size:25px;font-weight:800}.pill{font-size:12px;background:#e4efe7;color:var(--green);padding:6px 10px;border-radius:999px;font-weight:700}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 12px 35px rgba(45,39,28,.05)}
+    #messages{height:58vh;overflow:auto;padding:22px}
+    .row{display:flex;margin:10px 0}.row.me{justify-content:flex-end}
+    .bubble{max-width:75%;padding:12px 14px;border-radius:14px;line-height:1.45;background:#f0eee8}
+    .me .bubble{background:#dcecdf}
+    .composer{display:flex;gap:10px;border-top:1px solid var(--line);padding:14px}
+    input{flex:1;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:15px;outline:none}
+    button{border:0;background:var(--green);color:#fff;border-radius:12px;padding:0 18px;font-weight:700;cursor:pointer}
+    .hint{color:var(--muted);font-size:13px;margin-top:12px}
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="top">
+      <div class="brand">Azu Office</div>
+      <div class="pill">piloto personal · v0.1</div>
+    </div>
+    <section class="card">
+      <div id="messages">
+        <div class="row"><div class="bubble">Hola. Soy Azu Office. Esta es mi primera base nueva. Escribime <b>estado</b> para probar que el núcleo responde.</div></div>
+      </div>
+      <form class="composer" id="form">
+        <input id="input" autocomplete="off" placeholder="Escribile a Azu..." />
+        <button>Enviar</button>
+      </form>
+    </section>
+    <div class="hint">Regla de Azu: nunca confirma una acción externa hasta que el servicio correspondiente la confirme.</div>
+  </main>
+<script>
+  const form = document.getElementById('form');
+  const input = document.getElementById('input');
+  const messages = document.getElementById('messages');
+
+  function add(text, mine=false) {
+    const row = document.createElement('div');
+    row.className = 'row' + (mine ? ' me' : '');
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble';
+    bubble.textContent = text;
+    row.appendChild(bubble);
+    messages.appendChild(row);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const message = input.value.trim();
+    if (!message) return;
+    add(message, true);
+    input.value = '';
+
+    try {
+      const resp = await fetch('/api/chat', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({message})
+      });
+      const data = await resp.json();
+      add(data.reply || data.error || 'No pude responder.');
+    } catch {
+      add('No pude conectarme con el servidor.');
+    }
+  });
+</script>
+</body>
+</html>
