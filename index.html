@@ -5,32 +5,59 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Azu Office</title>
   <style>
-    :root{--bg:#f4f1ea;--panel:#fff;--ink:#20231f;--muted:#777b74;--green:#174f32;--line:#e4dfd3}
+    :root{--bg:#f4f1ea;--panel:#fff;--ink:#20231f;--muted:#777b74;--green:#174f32;--line:#e4dfd3;--danger:#8b2f2f}
     *{box-sizing:border-box}
     body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
     .shell{max-width:960px;margin:0 auto;min-height:100vh;padding:28px}
-    .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+    .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
     .brand{font-size:25px;font-weight:800}.pill{font-size:12px;background:#e4efe7;color:var(--green);padding:6px 10px;border-radius:999px;font-weight:700}
     .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 12px 35px rgba(45,39,28,.05)}
     #messages{height:58vh;overflow:auto;padding:22px}
     .row{display:flex;margin:10px 0}.row.me{justify-content:flex-end}
-    .bubble{max-width:75%;padding:12px 14px;border-radius:14px;line-height:1.45;background:#f0eee8}
+    .bubble{max-width:75%;padding:12px 14px;border-radius:14px;line-height:1.45;background:#f0eee8;white-space:pre-wrap}
     .me .bubble{background:#dcecdf}
     .composer{display:flex;gap:10px;border-top:1px solid var(--line);padding:14px}
     input{flex:1;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:15px;outline:none}
-    button{border:0;background:var(--green);color:#fff;border-radius:12px;padding:0 18px;font-weight:700;cursor:pointer}
+    button{border:0;background:var(--green);color:#fff;border-radius:12px;padding:0 18px;font-weight:700;cursor:pointer;min-height:42px}
+    .secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}
     .hint{color:var(--muted);font-size:13px;margin-top:12px}
+    .login-wrap{max-width:430px;margin:12vh auto 0}
+    .login-card{padding:26px}
+    .login-card h1{margin:0 0 8px;font-size:28px}
+    .login-card p{margin:0 0 20px;color:var(--muted);line-height:1.45}
+    .login-form{display:flex;gap:10px}
+    .error{color:var(--danger);font-size:13px;margin-top:12px;min-height:18px}
+    #app{display:none}
+    #login{display:none}
+    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .linkbtn{text-decoration:none;background:#fff;border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:999px;font-size:12px;font-weight:700}
   </style>
 </head>
 <body>
-  <main class="shell">
+  <section id="login" class="login-wrap">
+    <div class="card login-card">
+      <h1>Azu Office</h1>
+      <p>Acceso privado al workspace.</p>
+      <form id="loginForm" class="login-form">
+        <input id="password" type="password" autocomplete="current-password" placeholder="Contraseña" />
+        <button>Entrar</button>
+      </form>
+      <div id="loginError" class="error"></div>
+    </div>
+  </section>
+
+  <main id="app" class="shell">
     <div class="top">
       <div class="brand">Azu Office</div>
-      <div style="display:flex;gap:8px;align-items:center"><a id="googleConnect" href="/api/google/connect" style="text-decoration:none;background:#fff;border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:999px;font-size:12px;font-weight:700">Conectar Google Drive</a><div class="pill">piloto personal · v0.2</div></div>
+      <div class="actions">
+        <a id="googleConnect" href="/api/google/connect" class="linkbtn">Conectar Google Drive</a>
+        <button id="logout" class="secondary" type="button">Salir</button>
+        <div class="pill">piloto personal · v0.3</div>
+      </div>
     </div>
     <section class="card">
       <div id="messages">
-        <div class="row"><div class="bubble">Hola. Soy Azu Office. Esta es mi primera base nueva. Escribime <b>estado</b> para probar que el núcleo responde.</div></div>
+        <div class="row"><div class="bubble">Hola. Soy Azu Office. Ya tengo memoria, tareas y acceso a Google Drive. Escribime <b>estado</b> para probar el núcleo.</div></div>
       </div>
       <form class="composer" id="form">
         <input id="input" autocomplete="off" placeholder="Escribile a Azu..." />
@@ -39,18 +66,73 @@
     </section>
     <div class="hint">Regla de Azu: nunca confirma una acción externa hasta que el servicio correspondiente la confirme.</div>
   </main>
+
 <script>
+  const login = document.getElementById('login');
+  const app = document.getElementById('app');
+  const loginForm = document.getElementById('loginForm');
+  const password = document.getElementById('password');
+  const loginError = document.getElementById('loginError');
+  const logout = document.getElementById('logout');
   const form = document.getElementById('form');
   const input = document.getElementById('input');
   const messages = document.getElementById('messages');
   const googleConnect = document.getElementById('googleConnect');
 
-  fetch('/api/google/status').then(r => r.json()).then(data => {
-    if (data.connected) {
-      googleConnect.textContent = 'Google Drive conectado ✓';
-      googleConnect.style.pointerEvents = 'none';
+  async function authStatus() {
+    try {
+      const r = await fetch('/api/auth/status');
+      const data = await r.json();
+      return Boolean(data.authenticated);
+    } catch {
+      return false;
     }
-  }).catch(() => {});
+  }
+
+  async function showApp() {
+    login.style.display = 'none';
+    app.style.display = 'block';
+    try {
+      const r = await fetch('/api/google/status');
+      if (r.status === 401) return showLogin();
+      const data = await r.json();
+      if (data.connected) {
+        googleConnect.textContent = 'Google Drive conectado ✓';
+      }
+    } catch {}
+  }
+
+  function showLogin() {
+    app.style.display = 'none';
+    login.style.display = 'block';
+    password.focus();
+  }
+
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    loginError.textContent = '';
+    try {
+      const r = await fetch('/api/auth/login', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({password: password.value})
+      });
+      const data = await r.json();
+      if (!r.ok) {
+        loginError.textContent = data.error || 'No pude iniciar sesión.';
+        return;
+      }
+      password.value = '';
+      await showApp();
+    } catch {
+      loginError.textContent = 'No pude conectarme con el servidor.';
+    }
+  });
+
+  logout.addEventListener('click', async () => {
+    await fetch('/api/auth/logout', {method:'POST'}).catch(() => {});
+    showLogin();
+  });
 
   function add(text, mine=false) {
     const row = document.createElement('div');
@@ -72,16 +154,22 @@
 
     try {
       const resp = await fetch('/api/chat', {
-        method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({message})
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message})
       });
+      if (resp.status === 401) {
+        add('La sesión venció. Volvé a entrar.');
+        return showLogin();
+      }
       const data = await resp.json();
       add(data.reply || data.error || 'No pude responder.');
     } catch {
       add('No pude conectarme con el servidor.');
     }
   });
+
+  authStatus().then(ok => ok ? showApp() : showLogin());
 </script>
 </body>
 </html>
