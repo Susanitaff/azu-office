@@ -1,6 +1,8 @@
+import { requireAuth } from '../lib/auth.js';
 import { createMemory, listMemories } from '../lib/memory.js';
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   try {
     if (req.method === 'GET') {
       const memories = await listMemories();
