@@ -1,7 +1,9 @@
+import { requireAuth } from '../../lib/auth.js';
 import { searchDrive } from '../../lib/google-drive.js';
 import { logAction } from '../../lib/action-log.js';
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
