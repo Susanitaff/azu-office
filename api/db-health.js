@@ -1,6 +1,8 @@
+import { requireAuth } from '../lib/auth.js';
 import { supabaseRequest } from '../lib/supabase-rest.js';
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
