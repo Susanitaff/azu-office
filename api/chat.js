@@ -1,5 +1,7 @@
 import { createMemory, listMemories } from '../lib/memory.js';
 import { createTask, listTasks } from '../lib/tasks.js';
+import { searchDrive } from '../lib/google-drive.js';
+import { logAction } from '../lib/action-log.js';
 
 function normalize(text) {
   return String(text || '').trim();
@@ -98,9 +100,41 @@ export default async function handler(req, res) {
       });
     }
 
+    const driveQuery = stripPrefix(message, ['buscame en drive', 'buscá en drive', 'busca en drive', 'buscame', 'buscá', 'busca']);
+    if (driveQuery) {
+      try {
+        const files = await searchDrive(driveQuery, 8);
+        await logAction('drive_search', message, 'google_drive', 'success', { result_count: files.length });
+
+        if (!files.length) {
+          return res.status(200).json({
+            reply: `No encontré nada en Drive con “${driveQuery}”.`,
+            intent: 'drive_search',
+          });
+        }
+
+        const lines = files.map((f, i) => {
+          const link = f.webViewLink ? ` — ${f.webViewLink}` : '';
+          return `${i + 1}. ${f.name}${link}`;
+        });
+
+        return res.status(200).json({
+          reply: `Encontré esto en Drive:\n\n${lines.join('\n')}`,
+          intent: 'drive_search',
+        });
+      } catch (error) {
+        return res.status(200).json({
+          reply: error.message.includes('no está conectado')
+            ? 'Google Drive todavía no está conectado. Tocá “Conectar Google Drive” en la pantalla principal.'
+            : `No pude buscar en Drive: ${error.message}`,
+          intent: 'drive_search_error',
+        });
+      }
+    }
+
     if (lower.includes('qué podés hacer') || lower.includes('que podes hacer') || lower === 'ayuda') {
       return res.status(200).json({
-        reply: 'Ya puedo guardar recuerdos y tareas. Probá: “recordá que los certificados van en Drive”, “qué recordás”, “creá una tarea revisar débitos” o “mis tareas”. Después vamos a sumar Drive, Calendar y comprensión libre con IA.',
+        reply: 'Ya puedo guardar recuerdos, tareas y buscar archivos en Google Drive cuando esté conectado. Probá: “recordá que los certificados van en Drive”, “qué recordás”, “creá una tarea revisar débitos” o “mis tareas”. Después vamos a sumar Drive, Calendar y comprensión libre con IA.',
         intent: 'help',
       });
     }
