@@ -1,3 +1,4 @@
+import { requireAuth } from '../lib/auth.js';
 import { createMemory, listMemories } from '../lib/memory.js';
 import { createTask, listTasks } from '../lib/tasks.js';
 import { searchDrive } from '../lib/google-drive.js';
@@ -43,6 +44,7 @@ function extractDriveQuery(text) {
 }
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
