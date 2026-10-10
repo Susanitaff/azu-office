@@ -17,6 +17,31 @@ function stripPrefix(text, prefixes) {
   return null;
 }
 
+function extractDriveQuery(text) {
+  const original = String(text || '').trim();
+  const lower = original.toLowerCase();
+
+  const looksLikeDriveSearch =
+    /(drive|google drive)/i.test(original) &&
+    /(busc|encontr|localiz)/i.test(original);
+
+  const directDriveSearch =
+    /^(buscame|buscá|busca|buscarme|encontrame|encontrá|encuentra|localizame|localizá)/i.test(original);
+
+  if (!looksLikeDriveSearch && !directDriveSearch) return null;
+
+  let query = original
+    .replace(/[¿?]/g, ' ')
+    .replace(/\b(pod[eé]s|puedes|podr[ií]as|me|por favor|favor)\b/gi, ' ')
+    .replace(/\b(buscarme|buscame|buscá|busca|buscar|encontrame|encontrá|encuentra|encontrar|localizame|localizá|localizar)\b/gi, ' ')
+    .replace(/\b(en|dentro de|de)\s+(mi\s+)?(google\s+)?drive\b/gi, ' ')
+    .replace(/\b(mi|el|la|los|las|un|una)\b/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  return query || null;
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Método no permitido' });
@@ -100,7 +125,7 @@ export default async function handler(req, res) {
       });
     }
 
-    const driveQuery = stripPrefix(message, ['buscame en drive', 'buscá en drive', 'busca en drive', 'buscame', 'buscá', 'busca']);
+    const driveQuery = extractDriveQuery(message);
     if (driveQuery) {
       try {
         const files = await searchDrive(driveQuery, 8);
@@ -134,7 +159,7 @@ export default async function handler(req, res) {
 
     if (lower.includes('qué podés hacer') || lower.includes('que podes hacer') || lower === 'ayuda') {
       return res.status(200).json({
-        reply: 'Ya puedo guardar recuerdos, tareas y buscar archivos en Google Drive cuando esté conectado. Probá: “recordá que los certificados van en Drive”, “qué recordás”, “creá una tarea revisar débitos” o “mis tareas”. Después vamos a sumar Drive, Calendar y comprensión libre con IA.',
+        reply: 'Ya puedo guardar recuerdos, tareas y buscar archivos en Google Drive. Podés hablarme más natural: “¿podés buscarme mi currículum en Drive?”, “buscame el estatuto”, “recordá que los certificados van en Drive”, “creá una tarea revisar débitos” o “mis tareas”.',
         intent: 'help',
       });
     }
