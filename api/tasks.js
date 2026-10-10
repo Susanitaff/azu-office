@@ -1,6 +1,8 @@
+import { requireAuth } from '../lib/auth.js';
 import { createTask, listTasks } from '../lib/tasks.js';
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   try {
     if (req.method === 'GET') {
       const tasks = await listTasks();
