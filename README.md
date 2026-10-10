@@ -27,3 +27,5 @@ Primero se prueba con un único workspace personal. El núcleo queda preparado p
 ## Estado
 
 v0.1 — base del proyecto creada.
+
+- Google OAuth configuration pending validation.
