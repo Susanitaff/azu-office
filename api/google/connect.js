@@ -1,7 +1,9 @@
+import { requireAuth } from '../../lib/auth.js';
 import crypto from 'node:crypto';
 import { buildGoogleAuthUrl } from '../../lib/google-oauth.js';
 
 export default async function handler(req, res) {
+  if (!requireAuth(req, res)) return;
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Método no permitido' });
   }
