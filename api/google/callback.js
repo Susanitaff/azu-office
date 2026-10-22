@@ -15,16 +15,17 @@ export default async function handler(req, res) {
   }
 
   if (req.query.error) {
-    return res.status(400).send(`Google rechazó la conexión: ${req.query.error}`);
+    const reason = encodeURIComponent(String(req.query.error));
+    return res.redirect(302, `/?google=error&reason=${reason}`);
   }
 
   const code = req.query.code;
   const state = req.query.state;
   const expectedState = readCookie(req, 'azu_google_oauth_state');
 
-  if (!code) return res.status(400).send('Falta code');
+  if (!code) return res.redirect(302, '/?google=error&reason=falta_codigo');
   if (!state || !expectedState || state !== expectedState) {
-    return res.status(400).send('Estado OAuth inválido. Volvé a iniciar la conexión.');
+    return res.redirect(302, '/?google=error&reason=oauth_state');
   }
 
   try {
@@ -36,6 +37,11 @@ export default async function handler(req, res) {
     return res.redirect(302, '/?google=connected');
   } catch (error) {
     console.error('Google callback error:', error);
-    return res.status(500).send(`No pude conectar Google: ${error.message}`);
+    res.setHeader(
+      'Set-Cookie',
+      'azu_google_oauth_state=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0'
+    );
+    const reason = encodeURIComponent(error.message || 'No pude conectar Google');
+    return res.redirect(302, `/?google=error&reason=${reason}`);
   }
 }
