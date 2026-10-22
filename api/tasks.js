@@ -1,5 +1,5 @@
 import { requireAuth } from '../lib/auth.js';
-import { createTask, listTasks } from '../lib/tasks.js';
+import { createTask, listTasks, completeTask } from '../lib/tasks.js';
 
 export default async function handler(req, res) {
   if (!requireAuth(req, res)) return;
@@ -20,6 +20,13 @@ export default async function handler(req, res) {
 
       const task = await createTask(title, notes, dueAt, 'api');
       return res.status(201).json({ ok: true, task });
+    }
+
+    if (req.method === 'PATCH') {
+      const id = String(req.body?.id || '').trim();
+      if (!id) return res.status(400).json({ error: 'Falta id' });
+      const task = await completeTask(id);
+      return res.status(200).json({ ok: true, task });
     }
 
     return res.status(405).json({ error: 'Método no permitido' });
