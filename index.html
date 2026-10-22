@@ -2,174 +2,450 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <meta name="theme-color" content="#004CFF" />
   <title>Azu Office</title>
   <style>
-    :root{--bg:#f4f1ea;--panel:#fff;--ink:#20231f;--muted:#777b74;--green:#174f32;--line:#e4dfd3;--danger:#8b2f2f}
+    :root{
+      --blue:#004CFF;--blue2:#00A7FF;--blue3:#DDE8FF;--navy:#07132E;--navy2:#0B1C42;
+      --bg:#F4F7FF;--panel:#FFFFFF;--ink:#11182A;--muted:#6D7891;--line:#DFE6F3;
+      --success:#0A9B68;--danger:#D84040;--warning:#D88900;--shadow:0 18px 50px rgba(31,63,140,.10);
+    }
     *{box-sizing:border-box}
-    body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:var(--bg);color:var(--ink)}
-    .shell{max-width:960px;margin:0 auto;min-height:100vh;padding:28px}
-    .top{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;gap:12px}
-    .brand{font-size:25px;font-weight:800}.pill{font-size:12px;background:#e4efe7;color:var(--green);padding:6px 10px;border-radius:999px;font-weight:700}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 12px 35px rgba(45,39,28,.05)}
-    #messages{height:58vh;overflow:auto;padding:22px}
-    .row{display:flex;margin:10px 0}.row.me{justify-content:flex-end}
-    .bubble{max-width:75%;padding:12px 14px;border-radius:14px;line-height:1.45;background:#f0eee8;white-space:pre-wrap}
-    .me .bubble{background:#dcecdf}
-    .composer{display:flex;gap:10px;border-top:1px solid var(--line);padding:14px}
-    input{flex:1;border:1px solid var(--line);border-radius:12px;padding:13px 14px;font-size:15px;outline:none}
-    button{border:0;background:var(--green);color:#fff;border-radius:12px;padding:0 18px;font-weight:700;cursor:pointer;min-height:42px}
-    .secondary{background:#fff;color:var(--ink);border:1px solid var(--line)}
-    .hint{color:var(--muted);font-size:13px;margin-top:12px}
-    .login-wrap{max-width:430px;margin:12vh auto 0}
-    .login-card{padding:26px}
-    .login-card h1{margin:0 0 8px;font-size:28px}
-    .login-card p{margin:0 0 20px;color:var(--muted);line-height:1.45}
-    .login-form{display:flex;gap:10px}
-    .error{color:var(--danger);font-size:13px;margin-top:12px;min-height:18px}
-    #app{display:none}
-    #login{display:none}
-    .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .linkbtn{text-decoration:none;background:#fff;border:1px solid var(--line);color:var(--ink);padding:7px 10px;border-radius:999px;font-size:12px;font-weight:700}
+    html,body{margin:0;min-height:100%;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--bg);color:var(--ink)}
+    button,input,textarea{font:inherit}
+    button{cursor:pointer}
+    a{color:inherit}
+    .hidden{display:none!important}
+
+    /* LOGIN */
+    #login{min-height:100vh;display:none;align-items:center;justify-content:center;padding:24px;background:
+      radial-gradient(circle at 20% 10%,rgba(0,76,255,.22),transparent 36%),
+      radial-gradient(circle at 90% 80%,rgba(0,167,255,.18),transparent 34%),var(--navy)}
+    .login-card{width:min(440px,100%);background:white;border-radius:28px;padding:30px;box-shadow:0 30px 90px rgba(0,0,0,.28)}
+    .login-logo{width:58px;height:58px;border-radius:18px;background:linear-gradient(135deg,var(--blue),var(--blue2));display:grid;place-items:center;color:white;font-size:28px;font-weight:900;box-shadow:0 12px 35px rgba(0,76,255,.35);margin-bottom:22px}
+    .login-card h1{margin:0;font-size:30px;letter-spacing:-.8px}.login-card p{color:var(--muted);line-height:1.5;margin:9px 0 22px}
+    .login-form{display:flex;gap:10px}.field{width:100%;border:1px solid var(--line);border-radius:14px;padding:13px 14px;background:#fff;outline:none;transition:.2s}
+    .field:focus{border-color:var(--blue);box-shadow:0 0 0 4px rgba(0,76,255,.10)}
+    .btn{border:0;border-radius:14px;padding:12px 16px;font-weight:800;background:var(--blue);color:#fff;box-shadow:0 9px 25px rgba(0,76,255,.20)}
+    .btn:hover{filter:brightness(.98)}.btn.secondary{background:#fff;color:var(--ink);border:1px solid var(--line);box-shadow:none}
+    .btn.ghost{background:#EEF3FF;color:var(--blue);box-shadow:none}.btn.small{padding:8px 11px;border-radius:10px;font-size:13px}
+    #loginError{min-height:18px;margin-top:12px;color:var(--danger);font-size:13px;font-weight:700}
+
+    /* APP */
+    #app{display:none;min-height:100vh}
+    .layout{display:grid;grid-template-columns:252px minmax(0,1fr);min-height:100vh}
+    .sidebar{background:linear-gradient(180deg,var(--navy),#050C1E);color:#fff;padding:22px 16px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;z-index:20}
+    .brand{display:flex;align-items:center;gap:12px;padding:4px 8px 22px}
+    .brand-mark{width:42px;height:42px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--blue2));display:grid;place-items:center;font-weight:950;font-size:21px;box-shadow:0 0 28px rgba(0,76,255,.55)}
+    .brand-name{font-size:19px;font-weight:900;letter-spacing:-.3px}.brand-sub{font-size:10px;color:#93A4CB;text-transform:uppercase;letter-spacing:1.6px;margin-top:2px}
+    .nav{display:flex;flex-direction:column;gap:5px}.nav-btn{border:0;background:transparent;color:#AEBAD6;display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:13px;text-align:left;font-weight:750;transition:.18s;white-space:nowrap}
+    .nav-btn:hover{background:rgba(255,255,255,.06);color:#fff}.nav-btn.active{background:var(--blue);color:#fff;box-shadow:0 10px 30px rgba(0,76,255,.28)}
+    .nav-icon{width:22px;text-align:center;font-weight:900}
+    .sidebar-bottom{margin-top:auto;padding:16px 8px 4px}.mini-status{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.08);border-radius:15px;padding:12px}
+    .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#29D998;box-shadow:0 0 14px #29D998;margin-right:7px}
+    .mini-status b{font-size:12px}.mini-status div:last-child{font-size:10px;color:#93A4CB;margin-top:5px}
+
+    .main{min-width:0}
+    .topbar{height:76px;background:rgba(255,255,255,.88);backdrop-filter:blur(18px);border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:10}
+    .top-title{font-size:20px;font-weight:900;letter-spacing:-.35px}.top-sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .top-actions{display:flex;align-items:center;gap:9px}.status-pill{font-size:12px;font-weight:800;padding:7px 10px;border-radius:999px;background:#EAFBF5;color:#087A55}
+    .content{padding:28px;max-width:1480px;margin:0 auto}
+    .view{display:none}.view.active{display:block}
+    .section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin-bottom:20px}
+    .section-head h2{margin:0;font-size:28px;letter-spacing:-.8px}.section-head p{margin:6px 0 0;color:var(--muted);font-size:14px}
+    .card{background:var(--panel);border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow)}
+    .card-pad{padding:20px}
+
+    /* HOME */
+    .hero{background:linear-gradient(120deg,#003EFF 0%,#0069FF 55%,#00A7FF 100%);color:#fff;border-radius:26px;padding:30px;position:relative;overflow:hidden;box-shadow:0 24px 60px rgba(0,76,255,.27)}
+    .hero:after{content:"";position:absolute;width:330px;height:330px;border:1px solid rgba(255,255,255,.17);border-radius:50%;right:-100px;top:-170px;box-shadow:0 0 0 48px rgba(255,255,255,.04),0 0 0 96px rgba(255,255,255,.025)}
+    .hero-kicker{font-size:12px;text-transform:uppercase;letter-spacing:1.8px;font-weight:900;opacity:.8}.hero h1{font-size:36px;line-height:1.05;max-width:680px;margin:10px 0 12px;letter-spacing:-1.4px}.hero p{max-width:650px;margin:0;line-height:1.55;opacity:.88}
+    .hero-actions{display:flex;gap:10px;margin-top:22px;position:relative;z-index:2}.hero .btn{background:#fff;color:var(--blue);box-shadow:none}.hero .btn.secondary{background:rgba(255,255,255,.13);color:#fff;border-color:rgba(255,255,255,.25)}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:18px 0}.stat{padding:18px}.stat-label{font-size:12px;color:var(--muted);font-weight:800}.stat-value{font-size:30px;font-weight:950;margin-top:8px;letter-spacing:-1px}.stat-foot{font-size:11px;color:var(--muted);margin-top:4px}
+    .home-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}.quick-list{display:grid;grid-template-columns:1fr 1fr;gap:10px}.quick{border:1px solid var(--line);background:#fff;border-radius:15px;padding:15px;text-align:left;transition:.18s}.quick:hover{border-color:#AAC0FF;transform:translateY(-1px)}.quick b{display:block;font-size:14px}.quick span{display:block;font-size:11px;color:var(--muted);margin-top:4px}
+    .activity-preview{display:flex;flex-direction:column;gap:10px}.activity-row{display:flex;gap:11px;align-items:flex-start;padding:10px 0;border-bottom:1px solid #EEF2F8}.activity-row:last-child{border-bottom:0}.activity-bullet{width:28px;height:28px;border-radius:10px;background:#EEF3FF;color:var(--blue);display:grid;place-items:center;font-size:12px;font-weight:900;flex:0 0 auto}.activity-main{font-size:13px;font-weight:750}.activity-meta{font-size:11px;color:var(--muted);margin-top:3px}
+
+    /* CHAT */
+    .chat-shell{display:grid;grid-template-rows:1fr auto;height:calc(100vh - 145px);min-height:580px;overflow:hidden}
+    #messages{overflow:auto;padding:24px;background:linear-gradient(180deg,#FBFCFF,#F6F9FF)}
+    .row{display:flex;margin:10px 0}.row.me{justify-content:flex-end}.bubble{max-width:min(720px,78%);padding:13px 15px;border-radius:16px;background:#fff;border:1px solid var(--line);line-height:1.5;white-space:pre-wrap;font-size:14px;box-shadow:0 5px 18px rgba(32,57,110,.06)}
+    .me .bubble{background:var(--blue);border-color:var(--blue);color:#fff;border-bottom-right-radius:5px}.row:not(.me) .bubble{border-bottom-left-radius:5px}
+    .bubble a{color:inherit;font-weight:800}.chat-composer{border-top:1px solid var(--line);background:#fff;padding:14px;display:flex;gap:10px}.chat-composer .field{flex:1}
+    .azu-welcome{display:flex;gap:12px;align-items:flex-start}.azu-mini{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff;display:grid;place-items:center;font-weight:950;flex:0 0 auto}
+
+    /* LISTS */
+    .toolbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}.toolbar .field{max-width:420px}
+    .list{display:flex;flex-direction:column}.list-item{padding:15px 17px;border-bottom:1px solid #EEF2F7;display:flex;align-items:center;gap:12px}.list-item:last-child{border-bottom:0}.list-main{min-width:0;flex:1}.list-title{font-size:14px;font-weight:800;word-break:break-word}.list-meta{font-size:11px;color:var(--muted);margin-top:4px}.check{width:22px;height:22px;border-radius:8px;border:1.5px solid #B8C5E2;background:white;display:grid;place-items:center;color:#fff;flex:0 0 auto}.check:hover{border-color:var(--blue);background:#EEF3FF}
+    .empty{padding:42px 24px;text-align:center;color:var(--muted)}.empty b{display:block;color:var(--ink);margin-bottom:5px}
+    .tag{font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:.8px;padding:5px 8px;border-radius:999px;background:#EEF3FF;color:var(--blue)}
+    .memory-grid,.integration-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.memory-card{padding:17px}.memory-card p{margin:10px 0 0;line-height:1.45;font-size:14px}.memory-card .meta{font-size:10px;color:var(--muted);margin-top:12px}
+    .integration-card{padding:18px;display:flex;flex-direction:column;min-height:190px}.integration-top{display:flex;align-items:center;justify-content:space-between;gap:10px}.provider{font-weight:900;font-size:16px}.provider-sub{font-size:12px;color:var(--muted);margin:8px 0 18px;line-height:1.45}.integration-card .btn{margin-top:auto;align-self:flex-start}
+    .connected{background:#EAFBF5;color:#087A55}.planned{background:#F1F3F7;color:#697386}.warning{background:#FFF6E3;color:#A96A00}
+
+    /* DOCUMENTS */
+    .search-box{display:flex;gap:10px}.search-box .field{flex:1}.result-link{font-size:12px;color:var(--blue);font-weight:800;text-decoration:none}.result-link:hover{text-decoration:underline}
+
+    /* SETTINGS */
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.setting-row{display:flex;justify-content:space-between;gap:20px;padding:13px 0;border-bottom:1px solid #EEF2F7}.setting-row:last-child{border-bottom:0}.setting-label{font-size:13px;font-weight:800}.setting-value{font-size:12px;color:var(--muted);text-align:right}
+    .danger-zone{border-color:#FFD5D5}.danger-zone .btn{background:#FFF0F0;color:#B92F2F;box-shadow:none}
+
+    .toast{position:fixed;right:22px;bottom:22px;background:var(--navy);color:white;padding:12px 15px;border-radius:13px;font-size:13px;font-weight:750;box-shadow:0 16px 50px rgba(0,0,0,.22);z-index:100;opacity:0;transform:translateY(8px);pointer-events:none;transition:.22s}.toast.show{opacity:1;transform:none}
+    .spinner{width:16px;height:16px;border-radius:50%;border:2px solid #D6E0F3;border-top-color:var(--blue);animation:spin .75s linear infinite;display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}
+
+    @media(max-width:1050px){.stats{grid-template-columns:repeat(2,1fr)}.home-grid{grid-template-columns:1fr}.memory-grid,.integration-grid{grid-template-columns:repeat(2,1fr)}}
+    @media(max-width:820px){
+      .layout{grid-template-columns:1fr}.sidebar{height:auto;position:sticky;top:0;padding:10px 12px;display:block;background:var(--navy);overflow:hidden}.brand{padding:2px 4px 10px}.brand-mark{width:36px;height:36px;border-radius:11px}.brand-sub{display:none}
+      .nav{flex-direction:row;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}.nav::-webkit-scrollbar{display:none}.nav-btn{padding:9px 11px;font-size:12px;flex:0 0 auto}.nav-icon{width:auto}.sidebar-bottom{display:none}
+      .topbar{top:101px;height:64px;padding:0 16px}.content{padding:16px}.top-actions .status-pill{display:none}.section-head{align-items:flex-start}.section-head h2{font-size:24px}
+      .hero{padding:23px}.hero h1{font-size:30px}.stats{grid-template-columns:1fr 1fr}.memory-grid,.integration-grid,.settings-grid{grid-template-columns:1fr}.chat-shell{height:calc(100vh - 198px);min-height:520px}.bubble{max-width:88%}
+    }
+    @media(max-width:520px){
+      .top-sub{display:none}.content{padding:12px}.stats{gap:9px;margin:12px 0}.stat{padding:14px}.stat-value{font-size:26px}.hero{border-radius:20px}.hero h1{font-size:27px}.hero-actions{flex-direction:column;align-items:stretch}.quick-list{grid-template-columns:1fr}.search-box,.toolbar{flex-direction:column}.toolbar .field{max-width:none}.login-form{flex-direction:column}.bubble{max-width:94%}
+    }
   </style>
 </head>
 <body>
-  <section id="login" class="login-wrap">
-    <div class="card login-card">
+  <section id="login">
+    <div class="login-card">
+      <div class="login-logo">A</div>
       <h1>Azu Office</h1>
-      <p>Acceso privado al workspace.</p>
+      <p>Tu asistente administrativa. Entrá a tu workspace privado.</p>
       <form id="loginForm" class="login-form">
-        <input id="password" type="password" autocomplete="current-password" placeholder="Contraseña" />
-        <button>Entrar</button>
+        <input id="password" class="field" type="password" autocomplete="current-password" inputmode="numeric" placeholder="Contraseña" />
+        <button class="btn">Entrar</button>
       </form>
-      <div id="loginError" class="error"></div>
+      <div id="loginError"></div>
     </div>
   </section>
 
-  <main id="app" class="shell">
-    <div class="top">
-      <div class="brand">Azu Office</div>
-      <div class="actions">
-        <a id="googleConnect" href="/api/google/connect" class="linkbtn">Conectar Google Drive</a>
-        <button id="logout" class="secondary" type="button">Salir</button>
-        <div class="pill">piloto personal · v0.3</div>
-      </div>
+  <main id="app">
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">A</div>
+          <div><div class="brand-name">Azu Office</div><div class="brand-sub">Workspace inteligente</div></div>
+        </div>
+        <nav class="nav" id="nav">
+          <button class="nav-btn active" data-view="home"><span class="nav-icon">✦</span>Inicio</button>
+          <button class="nav-btn" data-view="chat"><span class="nav-icon">⌁</span>Azu</button>
+          <button class="nav-btn" data-view="tasks"><span class="nav-icon">✓</span>Tareas</button>
+          <button class="nav-btn" data-view="reminders"><span class="nav-icon">◷</span>Recordatorios</button>
+          <button class="nav-btn" data-view="documents"><span class="nav-icon">▣</span>Documentos</button>
+          <button class="nav-btn" data-view="memory"><span class="nav-icon">◆</span>Memoria</button>
+          <button class="nav-btn" data-view="integrations"><span class="nav-icon">↗</span>Integraciones</button>
+          <button class="nav-btn" data-view="activity"><span class="nav-icon">◌</span>Actividad</button>
+          <button class="nav-btn" data-view="settings"><span class="nav-icon">⚙</span>Configuración</button>
+        </nav>
+        <div class="sidebar-bottom">
+          <div class="mini-status"><div><span class="dot"></span><b>Azu activa</b></div><div>piloto personal · v0.4</div></div>
+        </div>
+      </aside>
+
+      <section class="main">
+        <header class="topbar">
+          <div><div class="top-title" id="topTitle">Inicio</div><div class="top-sub" id="topSub">Tu centro de trabajo con Azu</div></div>
+          <div class="top-actions"><span class="status-pill">● Sistema activo</span><button id="topAzu" class="btn small">Hablar con Azu</button></div>
+        </header>
+
+        <div class="content">
+          <section class="view active" id="view-home">
+            <div class="hero">
+              <div class="hero-kicker">Azu Office · Centro operativo</div>
+              <h1>Todo lo que tu administración necesita, en un solo lugar.</h1>
+              <p>Preguntá, buscá documentos, organizá tareas y conectá el universo Google. Después Azu va a sumar MI CLUB como fuente de información operativa.</p>
+              <div class="hero-actions"><button class="btn" data-go="chat">Hablar con Azu</button><button class="btn secondary" data-go="documents">Buscar en Drive</button></div>
+            </div>
+            <div class="stats">
+              <div class="card stat"><div class="stat-label">Tareas pendientes</div><div class="stat-value" id="statTasks">—</div><div class="stat-foot">Trabajo por resolver</div></div>
+              <div class="card stat"><div class="stat-label">Recordatorios</div><div class="stat-value" id="statReminders">—</div><div class="stat-foot">Con fecha asignada</div></div>
+              <div class="card stat"><div class="stat-label">Memorias</div><div class="stat-value" id="statMemory">—</div><div class="stat-foot">Contexto guardado</div></div>
+              <div class="card stat"><div class="stat-label">Google</div><div class="stat-value" id="statGoogle">—</div><div class="stat-foot">Integración principal</div></div>
+            </div>
+            <div class="home-grid">
+              <div class="card card-pad">
+                <div class="section-head" style="margin-bottom:14px"><div><h2 style="font-size:19px">Acciones rápidas</h2><p>Lo que más vas a usar.</p></div></div>
+                <div class="quick-list">
+                  <button class="quick" data-go="chat"><b>Preguntarle a Azu</b><span>Usá lenguaje natural.</span></button>
+                  <button class="quick" data-go="documents"><b>Buscar un documento</b><span>Drive conectado al workspace.</span></button>
+                  <button class="quick" data-go="tasks"><b>Crear una tarea</b><span>Queda visible para seguimiento.</span></button>
+                  <button class="quick" data-go="reminders"><b>Crear recordatorio</b><span>Con fecha y hora.</span></button>
+                </div>
+              </div>
+              <div class="card card-pad">
+                <div class="section-head" style="margin-bottom:8px"><div><h2 style="font-size:19px">Última actividad</h2><p>Qué estuvo haciendo Azu.</p></div><button class="btn ghost small" data-go="activity">Ver todo</button></div>
+                <div id="homeActivity" class="activity-preview"><div class="empty"><span class="spinner"></span></div></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-chat">
+            <div class="section-head"><div><h2>Azu</h2><p>Tu conversación de trabajo. Pedile cosas como se las pedirías a una persona.</p></div></div>
+            <div class="card chat-shell">
+              <div id="messages">
+                <div class="row"><div class="bubble"><div class="azu-welcome"><div class="azu-mini">A</div><div><b>Hola. Soy Azu Office.</b><br>Ya puedo recordar cosas, manejar tareas y buscar archivos en Google Drive. Decime qué necesitás.</div></div></div></div>
+              </div>
+              <form class="chat-composer" id="chatForm"><input id="chatInput" class="field" autocomplete="off" placeholder="Escribile a Azu..." /><button class="btn">Enviar</button></form>
+            </div>
+          </section>
+
+          <section class="view" id="view-tasks">
+            <div class="section-head"><div><h2>Tareas</h2><p>Pendientes del workspace.</p></div></div>
+            <div class="card card-pad">
+              <form id="taskForm" class="toolbar"><input id="taskTitle" class="field" placeholder="Nueva tarea..." /><button class="btn">Agregar tarea</button></form>
+              <div id="taskList" class="list"><div class="empty"><span class="spinner"></span></div></div>
+            </div>
+          </section>
+
+          <section class="view" id="view-reminders">
+            <div class="section-head"><div><h2>Recordatorios</h2><p>Por ahora viven en Azu. El próximo paso es sincronizarlos con Google Calendar.</p></div></div>
+            <div class="card card-pad">
+              <form id="reminderForm" class="toolbar"><input id="reminderTitle" class="field" placeholder="Qué querés recordar..." /><input id="reminderDate" class="field" type="datetime-local" /><button class="btn">Crear recordatorio</button></form>
+              <div id="reminderList" class="list"><div class="empty"><span class="spinner"></span></div></div>
+            </div>
+          </section>
+
+          <section class="view" id="view-documents">
+            <div class="section-head"><div><h2>Documentos</h2><p>Buscá en Drive sin salir de Azu Office.</p></div></div>
+            <div class="card card-pad" style="margin-bottom:16px">
+              <form id="driveForm" class="search-box"><input id="driveQuery" class="field" placeholder="Ej: póliza, estatuto, cajas, curriculum..." /><button class="btn">Buscar en Drive</button></form>
+              <div id="driveResults" class="list" style="margin-top:12px"><div class="empty"><b>Buscador listo</b>Escribí el nombre o una palabra del archivo.</div></div>
+            </div>
+            <div class="card card-pad">
+              <div class="section-head" style="margin-bottom:6px"><div><h2 style="font-size:19px">Biblioteca de Azu</h2><p>Documentos que Azu vaya registrando u organizando.</p></div></div>
+              <div id="documentList" class="list"><div class="empty"><span class="spinner"></span></div></div>
+            </div>
+          </section>
+
+          <section class="view" id="view-memory">
+            <div class="section-head"><div><h2>Memoria</h2><p>Datos y contexto que Azu tiene que conservar.</p></div></div>
+            <div id="memoryGrid" class="memory-grid"><div class="card empty"><span class="spinner"></span></div></div>
+          </section>
+
+          <section class="view" id="view-integrations">
+            <div class="section-head"><div><h2>Integraciones</h2><p>Servicios que Azu usa para trabajar.</p></div></div>
+            <div class="integration-grid">
+              <div class="card integration-card">
+                <div class="integration-top"><div class="provider">Google Drive</div><span id="googleTag" class="tag warning">Comprobando</span></div>
+                <div class="provider-sub">Archivos y carpetas del workspace. Azu puede buscar documentos reales y devolver sus enlaces.</div>
+                <a id="googleConnect" class="btn small" href="/api/google/connect" style="text-decoration:none">Conectar / reparar</a>
+              </div>
+              <div class="card integration-card">
+                <div class="integration-top"><div class="provider">Google Calendar</div><span class="tag planned">Siguiente</span></div>
+                <div class="provider-sub">Agenda, vencimientos, reuniones y recordatorios con fecha y hora.</div>
+                <button class="btn ghost small" disabled>Próximo paso</button>
+              </div>
+              <div class="card integration-card">
+                <div class="integration-top"><div class="provider">Gmail + Meet</div><span class="tag planned">Planificado</span></div>
+                <div class="provider-sub">Correo y reuniones del equipo, dentro del mismo ecosistema Google.</div>
+                <button class="btn ghost small" disabled>Más adelante</button>
+              </div>
+              <div class="card integration-card">
+                <div class="integration-top"><div class="provider">MI CLUB</div><span class="tag planned">Planificado</span></div>
+                <div class="provider-sub">Será la fuente de verdad para caja, cobranzas, disponibilidades, socios y operación del club.</div>
+                <button class="btn ghost small" disabled>Conector futuro</button>
+              </div>
+              <div class="card integration-card">
+                <div class="integration-top"><div class="provider">Microsoft 365</div><span class="tag planned">Opcional</span></div>
+                <div class="provider-sub">OneDrive, SharePoint, Outlook y Teams para organizaciones que trabajen con Microsoft.</div>
+                <button class="btn ghost small" disabled>Arquitectura prevista</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-activity">
+            <div class="section-head"><div><h2>Actividad</h2><p>Registro de las acciones externas y consultas de Azu.</p></div></div>
+            <div class="card"><div id="activityList" class="list"><div class="empty"><span class="spinner"></span></div></div></div>
+          </section>
+
+          <section class="view" id="view-settings">
+            <div class="section-head"><div><h2>Configuración</h2><p>Estado general del workspace.</p></div></div>
+            <div class="settings-grid">
+              <div class="card card-pad">
+                <h3 style="margin-top:0">Workspace</h3>
+                <div class="setting-row"><div class="setting-label">Nombre</div><div class="setting-value" id="workspaceName">Cami</div></div>
+                <div class="setting-row"><div class="setting-label">Tipo</div><div class="setting-value" id="workspaceKind">Personal</div></div>
+                <div class="setting-row"><div class="setting-label">Versión</div><div class="setting-value">Piloto v0.4</div></div>
+              </div>
+              <div class="card card-pad">
+                <h3 style="margin-top:0">Seguridad</h3>
+                <div class="setting-row"><div class="setting-label">Acceso</div><div class="setting-value">Privado con sesión</div></div>
+                <div class="setting-row"><div class="setting-label">Datos</div><div class="setting-value">Supabase privado</div></div>
+                <div class="setting-row"><div class="setting-label">Tokens Google</div><div class="setting-value">Cifrados</div></div>
+              </div>
+              <div class="card card-pad danger-zone">
+                <h3 style="margin-top:0">Sesión</h3>
+                <p style="color:var(--muted);font-size:13px;line-height:1.5">Cerrá la sesión de Azu Office en este dispositivo.</p>
+                <button id="logout" class="btn small">Cerrar sesión</button>
+              </div>
+            </div>
+          </section>
+        </div>
+      </section>
     </div>
-    <section class="card">
-      <div id="messages">
-        <div class="row"><div class="bubble">Hola. Soy Azu Office. Ya tengo memoria, tareas y acceso a Google Drive. Escribime <b>estado</b> para probar el núcleo.</div></div>
-      </div>
-      <form class="composer" id="form">
-        <input id="input" autocomplete="off" placeholder="Escribile a Azu..." />
-        <button>Enviar</button>
-      </form>
-    </section>
-    <div class="hint">Regla de Azu: nunca confirma una acción externa hasta que el servicio correspondiente la confirme.</div>
   </main>
+  <div id="toast" class="toast"></div>
 
 <script>
-  const login = document.getElementById('login');
-  const app = document.getElementById('app');
-  const loginForm = document.getElementById('loginForm');
-  const password = document.getElementById('password');
-  const loginError = document.getElementById('loginError');
-  const logout = document.getElementById('logout');
-  const form = document.getElementById('form');
-  const input = document.getElementById('input');
-  const messages = document.getElementById('messages');
-  const googleConnect = document.getElementById('googleConnect');
-
-  async function authStatus() {
-    try {
-      const r = await fetch('/api/auth/status');
-      const data = await r.json();
-      return Boolean(data.authenticated);
-    } catch {
-      return false;
-    }
+  const state={tasks:[],memories:[],logs:[],documents:[],google:false,workspace:null};
+  const titles={
+    home:['Inicio','Tu centro de trabajo con Azu'],
+    chat:['Azu','Conversación y acciones'],
+    tasks:['Tareas','Pendientes del workspace'],
+    reminders:['Recordatorios','Fechas y vencimientos'],
+    documents:['Documentos','Drive y biblioteca'],
+    memory:['Memoria','Contexto persistente'],
+    integrations:['Integraciones','Servicios conectados'],
+    activity:['Actividad','Trazabilidad de acciones'],
+    settings:['Configuración','Workspace y seguridad']
+  };
+  const login=document.getElementById('login'), app=document.getElementById('app'), toast=document.getElementById('toast');
+  const fmt=d=>{try{return new Intl.DateTimeFormat('es-AR',{dateStyle:'medium',timeStyle:'short'}).format(new Date(d))}catch{return d||''}};
+  function notify(text){toast.textContent=text;toast.classList.add('show');setTimeout(()=>toast.classList.remove('show'),2600)}
+  async function api(url,options={}){
+    const r=await fetch(url,{...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
+    if(r.status===401){showLogin();throw new Error('Sesión vencida')}
+    let data={};try{data=await r.json()}catch{}
+    if(!r.ok)throw new Error(data.error||'No pude completar la acción');
+    return data;
   }
-
-  async function showApp() {
-    login.style.display = 'none';
-    app.style.display = 'block';
-    try {
-      const r = await fetch('/api/google/status');
-      if (r.status === 401) return showLogin();
-      const data = await r.json();
-      if (data.connected) {
-        googleConnect.textContent = 'Google Drive conectado ✓';
-      }
-    } catch {}
+  async function authStatus(){try{const r=await fetch('/api/auth/status');const d=await r.json();return !!d.authenticated}catch{return false}}
+  function showLogin(){app.style.display='none';login.style.display='flex';setTimeout(()=>document.getElementById('password').focus(),50)}
+  function showApp(){login.style.display='none';app.style.display='block';loadAll()}
+  function go(view){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===view));
+    document.getElementById('view-'+view)?.classList.add('active');
+    document.getElementById('topTitle').textContent=titles[view]?.[0]||'Azu Office';
+    document.getElementById('topSub').textContent=titles[view]?.[1]||'';
+    if(view==='chat')setTimeout(()=>document.getElementById('chatInput').focus(),80);
+    if(view==='activity')loadActivity();
+    if(view==='documents')loadDocuments();
+    if(view==='memory')loadMemories();
+    if(view==='tasks'||view==='reminders')loadTasks();
+    window.scrollTo({top:0,behavior:'smooth'});
   }
+  document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));
+  document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+  document.getElementById('topAzu').addEventListener('click',()=>go('chat'));
 
-  function showLogin() {
-    app.style.display = 'none';
-    login.style.display = 'block';
-    password.focus();
+  document.getElementById('loginForm').addEventListener('submit',async e=>{
+    e.preventDefault();const error=document.getElementById('loginError');error.textContent='';
+    try{
+      await api('/api/auth/login',{method:'POST',body:JSON.stringify({password:document.getElementById('password').value})});
+      document.getElementById('password').value='';showApp();
+    }catch(err){error.textContent=err.message}
+  });
+  document.getElementById('logout').addEventListener('click',async()=>{await fetch('/api/auth/logout',{method:'POST'}).catch(()=>{});showLogin()});
+
+  function renderStats(){
+    const reminders=state.tasks.filter(t=>t.due_at);
+    document.getElementById('statTasks').textContent=state.tasks.length;
+    document.getElementById('statReminders').textContent=reminders.length;
+    document.getElementById('statMemory').textContent=state.memories.length;
+    const sg=document.getElementById('statGoogle');sg.textContent=state.google?'OK':'—';sg.style.color=state.google?'var(--success)':'var(--muted)';
   }
-
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    loginError.textContent = '';
-    try {
-      const r = await fetch('/api/auth/login', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({password: password.value})
-      });
-      const data = await r.json();
-      if (!r.ok) {
-        loginError.textContent = data.error || 'No pude iniciar sesión.';
-        return;
-      }
-      password.value = '';
-      await showApp();
-    } catch {
-      loginError.textContent = 'No pude conectarme con el servidor.';
-    }
+  async function loadWorkspace(){
+    try{const d=await api('/api/db-health');state.workspace=d.workspace||null;if(state.workspace){document.getElementById('workspaceName').textContent=state.workspace.name;document.getElementById('workspaceKind').textContent=state.workspace.kind==='personal'?'Personal':state.workspace.kind}}catch{}
+  }
+  async function loadGoogle(){
+    try{
+      const d=await api('/api/google/status');state.google=!!d.connected;
+      const tag=document.getElementById('googleTag');
+      tag.textContent=state.google?'Conectado':'Desconectado';tag.className='tag '+(state.google?'connected':'warning');
+      document.getElementById('googleConnect').textContent=state.google?'Reparar / reconectar':'Conectar Google';
+    }catch{state.google=false}
+    renderStats();
+  }
+  async function loadTasks(){
+    const list=document.getElementById('taskList'), rem=document.getElementById('reminderList');
+    try{
+      const d=await api('/api/tasks');state.tasks=d.tasks||[];renderStats();
+      const plain=state.tasks.filter(t=>!t.due_at), reminders=state.tasks.filter(t=>t.due_at).sort((a,b)=>new Date(a.due_at)-new Date(b.due_at));
+      list.innerHTML=plain.length?'':'<div class="empty"><b>No hay tareas pendientes</b>Cuando crees una, aparece acá.</div>';
+      plain.forEach(t=>list.appendChild(taskNode(t)));
+      rem.innerHTML=reminders.length?'':'<div class="empty"><b>No hay recordatorios</b>Creá uno con fecha y hora.</div>';
+      reminders.forEach(t=>rem.appendChild(taskNode(t,true)));
+    }catch(e){list.innerHTML='<div class="empty"><b>No pude cargar tareas</b>'+e.message+'</div>';rem.innerHTML=list.innerHTML}
+  }
+  function taskNode(t,reminder=false){
+    const row=document.createElement('div');row.className='list-item';
+    const check=document.createElement('button');check.className='check';check.title='Marcar como completada';check.addEventListener('click',async()=>{try{await api('/api/tasks',{method:'PATCH',body:JSON.stringify({id:t.id})});notify('Tarea completada');loadTasks()}catch(e){notify(e.message)}});
+    const main=document.createElement('div');main.className='list-main';const title=document.createElement('div');title.className='list-title';title.textContent=t.title;main.appendChild(title);
+    const meta=document.createElement('div');meta.className='list-meta';meta.textContent=reminder&&t.due_at?'Recordar: '+fmt(t.due_at):(t.notes||'Pendiente');main.appendChild(meta);
+    row.append(check,main);if(reminder){const tag=document.createElement('span');tag.className='tag';tag.textContent='Recordatorio';row.appendChild(tag)}return row;
+  }
+  document.getElementById('taskForm').addEventListener('submit',async e=>{
+    e.preventDefault();const input=document.getElementById('taskTitle'),title=input.value.trim();if(!title)return;
+    try{await api('/api/tasks',{method:'POST',body:JSON.stringify({title})});input.value='';notify('Tarea creada');loadTasks()}catch(err){notify(err.message)}
+  });
+  document.getElementById('reminderForm').addEventListener('submit',async e=>{
+    e.preventDefault();const title=document.getElementById('reminderTitle').value.trim(),date=document.getElementById('reminderDate').value;if(!title||!date)return notify('Completá el texto y la fecha');
+    try{await api('/api/tasks',{method:'POST',body:JSON.stringify({title,due_at:new Date(date).toISOString()})});document.getElementById('reminderTitle').value='';document.getElementById('reminderDate').value='';notify('Recordatorio creado');loadTasks()}catch(err){notify(err.message)}
   });
 
-  logout.addEventListener('click', async () => {
-    await fetch('/api/auth/logout', {method:'POST'}).catch(() => {});
-    showLogin();
-  });
-
-  function add(text, mine=false) {
-    const row = document.createElement('div');
-    row.className = 'row' + (mine ? ' me' : '');
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.textContent = text;
-    row.appendChild(bubble);
-    messages.appendChild(row);
-    messages.scrollTop = messages.scrollHeight;
+  async function loadMemories(){
+    const grid=document.getElementById('memoryGrid');
+    try{
+      const d=await api('/api/memory');state.memories=d.memories||[];renderStats();grid.innerHTML='';
+      if(!state.memories.length){grid.innerHTML='<div class="card empty"><b>Azu todavía no guardó memorias</b>Podés decirle “recordá que…” desde el chat.</div>';return}
+      state.memories.forEach(m=>{const c=document.createElement('div');c.className='card memory-card';const tag=document.createElement('span');tag.className='tag';tag.textContent=m.category||'general';const p=document.createElement('p');p.textContent=m.content;const meta=document.createElement('div');meta.className='meta';meta.textContent='Guardado '+fmt(m.created_at);c.append(tag,p,meta);grid.appendChild(c)})
+    }catch(e){grid.innerHTML='<div class="card empty"><b>No pude cargar la memoria</b>'+e.message+'</div>'}
   }
 
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const message = input.value.trim();
-    if (!message) return;
-    add(message, true);
-    input.value = '';
-
-    try {
-      const resp = await fetch('/api/chat', {
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({message})
-      });
-      if (resp.status === 401) {
-        add('La sesión venció. Volvé a entrar.');
-        return showLogin();
-      }
-      const data = await resp.json();
-      add(data.reply || data.error || 'No pude responder.');
-    } catch {
-      add('No pude conectarme con el servidor.');
-    }
+  async function loadDocuments(){
+    const list=document.getElementById('documentList');
+    try{const d=await api('/api/documents');state.documents=d.documents||[];list.innerHTML='';
+      if(!state.documents.length){list.innerHTML='<div class="empty"><b>Biblioteca todavía vacía</b>Cuando Azu empiece a registrar y organizar archivos, van a aparecer acá.</div>';return}
+      state.documents.forEach(doc=>{const r=document.createElement('div');r.className='list-item';const icon=document.createElement('div');icon.className='activity-bullet';icon.textContent='D';const main=document.createElement('div');main.className='list-main';const title=document.createElement('div');title.className='list-title';title.textContent=doc.name;const meta=document.createElement('div');meta.className='list-meta';meta.textContent=[doc.category,doc.external_provider,fmt(doc.created_at)].filter(Boolean).join(' · ');main.append(title,meta);r.append(icon,main);if(doc.external_url){const a=document.createElement('a');a.className='result-link';a.target='_blank';a.rel='noopener';a.href=doc.external_url;a.textContent='Abrir';r.appendChild(a)}list.appendChild(r)})
+    }catch(e){list.innerHTML='<div class="empty"><b>No pude cargar documentos</b>'+e.message+'</div>'}
+  }
+  document.getElementById('driveForm').addEventListener('submit',async e=>{
+    e.preventDefault();const q=document.getElementById('driveQuery').value.trim(),box=document.getElementById('driveResults');if(!q)return;
+    box.innerHTML='<div class="empty"><span class="spinner"></span></div>';
+    try{
+      const d=await api('/api/drive/search?q='+encodeURIComponent(q));const files=d.files||[];box.innerHTML='';
+      if(!files.length){box.innerHTML='<div class="empty"><b>No encontré coincidencias</b>Probá con otra palabra del nombre.</div>';return}
+      files.forEach(file=>{const r=document.createElement('div');r.className='list-item';const icon=document.createElement('div');icon.className='activity-bullet';icon.textContent='↗';const main=document.createElement('div');main.className='list-main';const title=document.createElement('div');title.className='list-title';title.textContent=file.name;const meta=document.createElement('div');meta.className='list-meta';meta.textContent=file.modifiedTime?'Modificado '+fmt(file.modifiedTime):'Google Drive';main.append(title,meta);r.append(icon,main);if(file.webViewLink){const a=document.createElement('a');a.className='result-link';a.href=file.webViewLink;a.target='_blank';a.rel='noopener';a.textContent='Abrir en Drive';r.appendChild(a)}box.appendChild(r)})
+      loadActivity();
+    }catch(err){box.innerHTML='<div class="empty"><b>No pude buscar en Drive</b>'+err.message+'<br><br><a class="result-link" href="/api/google/connect">Reconectar Google</a></div>'}
   });
 
-  authStatus().then(ok => ok ? showApp() : showLogin());
+  async function loadActivity(){
+    const list=document.getElementById('activityList'),home=document.getElementById('homeActivity');
+    try{const d=await api('/api/activity');state.logs=d.logs||[];renderActivityList(list,state.logs);renderHomeActivity(home,state.logs.slice(0,4))}
+    catch(e){list.innerHTML='<div class="empty"><b>No pude cargar actividad</b>'+e.message+'</div>';home.innerHTML='<div class="empty">Sin actividad disponible.</div>'}
+  }
+  function labelAction(log){
+    const map={drive_search:'Búsqueda en Drive',google_connect:'Conexión Google',task_create:'Tarea',memory_create:'Memoria'};
+    return map[log.action_type]||String(log.action_type||'Acción').replaceAll('_',' ');
+  }
+  function renderActivityList(target,logs){
+    target.innerHTML='';if(!logs.length){target.innerHTML='<div class="empty"><b>Todavía no hay actividad</b>Las acciones de Azu van a quedar registradas acá.</div>';return}
+    logs.forEach(log=>{const r=document.createElement('div');r.className='list-item';const bullet=document.createElement('div');bullet.className='activity-bullet';bullet.textContent=log.status==='success'?'✓':'!';const main=document.createElement('div');main.className='list-main';const title=document.createElement('div');title.className='list-title';title.textContent=labelAction(log);const meta=document.createElement('div');meta.className='list-meta';meta.textContent=[log.requested_text,log.provider,fmt(log.created_at)].filter(Boolean).join(' · ');main.append(title,meta);r.append(bullet,main);const tag=document.createElement('span');tag.className='tag '+(log.status==='success'?'connected':'warning');tag.textContent=log.status;r.appendChild(tag);target.appendChild(r)})
+  }
+  function renderHomeActivity(target,logs){
+    target.innerHTML='';if(!logs.length){target.innerHTML='<div class="empty">Todavía no hay actividad.</div>';return}
+    logs.forEach(log=>{const r=document.createElement('div');r.className='activity-row';const b=document.createElement('div');b.className='activity-bullet';b.textContent=log.status==='success'?'✓':'!';const m=document.createElement('div');const a=document.createElement('div');a.className='activity-main';a.textContent=labelAction(log);const meta=document.createElement('div');meta.className='activity-meta';meta.textContent=(log.requested_text||log.provider||'')+' · '+fmt(log.created_at);m.append(a,meta);r.append(b,m);target.appendChild(r)})
+  }
+
+  function appendChat(text,mine=false){
+    const row=document.createElement('div');row.className='row'+(mine?' me':'');const bubble=document.createElement('div');bubble.className='bubble';
+    const parts=String(text||'').split(/(https?:\/\/[^\s]+)/g);parts.forEach(part=>{if(/^https?:\/\//.test(part)){const a=document.createElement('a');a.href=part;a.target='_blank';a.rel='noopener';a.textContent=part;bubble.appendChild(a)}else bubble.appendChild(document.createTextNode(part))});
+    row.appendChild(bubble);document.getElementById('messages').appendChild(row);document.getElementById('messages').scrollTop=document.getElementById('messages').scrollHeight;
+  }
+  document.getElementById('chatForm').addEventListener('submit',async e=>{
+    e.preventDefault();const input=document.getElementById('chatInput'),message=input.value.trim();if(!message)return;appendChat(message,true);input.value='';
+    try{const d=await api('/api/chat',{method:'POST',body:JSON.stringify({message})});appendChat(d.reply||d.error||'No pude responder.');if(['create_task','create_memory','drive_search'].includes(d.intent)){loadTasks();loadMemories();loadActivity()}}
+    catch(err){appendChat('No pude completar la acción: '+err.message)}
+  });
+
+  async function loadAll(){
+    await Promise.allSettled([loadWorkspace(),loadGoogle(),loadTasks(),loadMemories(),loadActivity()]);
+    loadDocuments();
+  }
+
+  authStatus().then(ok=>ok?showApp():showLogin());
 </script>
 </body>
 </html>
