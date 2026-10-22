@@ -395,7 +395,7 @@
 
   async function loadDocuments(){
     const list=document.getElementById('documentList');
-    try{const d=await api('/api/documents');state.documents=d.documents||[];list.innerHTML='';
+    try{const d=await api('/api/panel?resource=documents');state.documents=d.documents||[];list.innerHTML='';
       if(!state.documents.length){list.innerHTML='<div class="empty"><b>Biblioteca todavía vacía</b>Cuando Azu empiece a registrar y organizar archivos, van a aparecer acá.</div>';return}
       state.documents.forEach(doc=>{const r=document.createElement('div');r.className='list-item';const icon=document.createElement('div');icon.className='activity-bullet';icon.textContent='D';const main=document.createElement('div');main.className='list-main';const title=document.createElement('div');title.className='list-title';title.textContent=doc.name;const meta=document.createElement('div');meta.className='list-meta';meta.textContent=[doc.category,doc.external_provider,fmt(doc.created_at)].filter(Boolean).join(' · ');main.append(title,meta);r.append(icon,main);if(doc.external_url){const a=document.createElement('a');a.className='result-link';a.target='_blank';a.rel='noopener';a.href=doc.external_url;a.textContent='Abrir';r.appendChild(a)}list.appendChild(r)})
     }catch(e){list.innerHTML='<div class="empty"><b>No pude cargar documentos</b>'+e.message+'</div>'}
@@ -413,7 +413,7 @@
 
   async function loadActivity(){
     const list=document.getElementById('activityList'),home=document.getElementById('homeActivity');
-    try{const d=await api('/api/activity');state.logs=d.logs||[];renderActivityList(list,state.logs);renderHomeActivity(home,state.logs.slice(0,4))}
+    try{const d=await api('/api/panel?resource=activity');state.logs=d.logs||[];renderActivityList(list,state.logs);renderHomeActivity(home,state.logs.slice(0,4))}
     catch(e){list.innerHTML='<div class="empty"><b>No pude cargar actividad</b>'+e.message+'</div>';home.innerHTML='<div class="empty">Sin actividad disponible.</div>'}
   }
   function labelAction(log){
