@@ -199,9 +199,19 @@
 
           <section class="view" id="view-reminders">
             <div class="section-head"><div><h2>Recordatorios</h2><p>Por ahora viven en Azu. El próximo paso es sincronizarlos con Google Calendar.</p></div></div>
-            <div class="card card-pad">
+            <div class="card card-pad" style="margin-bottom:16px">
               <form id="reminderForm" class="toolbar"><input id="reminderTitle" class="field" placeholder="Qué querés recordar..." /><input id="reminderDate" class="field" type="datetime-local" /><button class="btn">Crear recordatorio</button></form>
               <div id="reminderList" class="list"><div class="empty"><span class="spinner"></span></div></div>
+            </div>
+            <div class="card card-pad">
+              <div class="section-head" style="margin-bottom:10px"><div><h2 style="font-size:19px">Próximos eventos de Google Calendar</h2><p>Reuniones, vencimientos y agenda del calendario principal.</p></div></div>
+              <form id="calendarEventForm" class="toolbar">
+                <input id="calendarTitle" class="field" placeholder="Nuevo evento..." />
+                <input id="calendarStart" class="field" type="datetime-local" />
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--muted)"><input id="calendarMeet" type="checkbox" /> Crear Meet</label>
+                <button class="btn">Agendar</button>
+              </form>
+              <div id="calendarList" class="list"><div class="empty">Calendar todavía no está activado.</div></div>
             </div>
           </section>
 
@@ -231,9 +241,9 @@
                 <a id="googleConnect" class="btn small" href="/api/google/connect" style="text-decoration:none">Conectar / reparar</a>
               </div>
               <div class="card integration-card">
-                <div class="integration-top"><div class="provider">Google Calendar</div><span class="tag planned">Siguiente</span></div>
-                <div class="provider-sub">Agenda, vencimientos, reuniones y recordatorios con fecha y hora.</div>
-                <button class="btn ghost small" disabled>Próximo paso</button>
+                <div class="integration-top"><div class="provider">Google Calendar</div><span id="calendarTag" class="tag warning">Pendiente</span></div>
+                <div class="provider-sub">Agenda, vencimientos, reuniones y recordatorios con fecha y hora usando la misma cuenta de Google.</div>
+                <a class="btn small" href="/api/google/connect" style="text-decoration:none">Activar / reconectar</a>
               </div>
               <div class="card integration-card">
                 <div class="integration-top"><div class="provider">Gmail + Meet</div><span class="tag planned">Planificado</span></div>
@@ -287,7 +297,7 @@
   <div id="toast" class="toast"></div>
 
 <script>
-  const state={tasks:[],memories:[],logs:[],documents:[],google:false,workspace:null};
+  const state={tasks:[],memories:[],logs:[],documents:[],google:false,calendar:false,events:[],workspace:null};
   const titles={
     home:['Inicio','Tu centro de trabajo con Azu'],
     chat:['Azu','Conversación y acciones'],
@@ -322,7 +332,7 @@
     if(view==='activity')loadActivity();
     if(view==='documents')loadDocuments();
     if(view==='memory')loadMemories();
-    if(view==='tasks'||view==='reminders')loadTasks();
+    if(view==='tasks'||view==='reminders'){loadTasks();if(view==='reminders')loadCalendar();}
     window.scrollTo({top:0,behavior:'smooth'});
   }
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.view)));
@@ -357,6 +367,35 @@
     }catch{state.google=false}
     renderStats();
   }
+
+  async function loadCalendar(){
+    const list=document.getElementById('calendarList');
+    const tag=document.getElementById('calendarTag');
+    if(!list||!tag)return;
+    try{
+      const d=await api('/api/panel?resource=calendar');
+      state.events=d.events||[];state.calendar=true;
+      tag.textContent='Conectado';tag.className='tag connected';
+      list.innerHTML='';
+      if(!state.events.length){list.innerHTML='<div class="empty"><b>No hay eventos próximos</b>Tu calendario está conectado.</div>';return}
+      state.events.forEach(ev=>{
+        const r=document.createElement('div');r.className='list-item';
+        const icon=document.createElement('div');icon.className='activity-bullet';icon.textContent='◷';
+        const main=document.createElement('div');main.className='list-main';
+        const title=document.createElement('div');title.className='list-title';title.textContent=ev.summary||'Sin título';
+        const meta=document.createElement('div');meta.className='list-meta';
+        const when=ev.start?.dateTime||ev.start?.date||'';
+        meta.textContent=when?fmt(when):'';
+        main.append(title,meta);r.append(icon,main);
+        const href=ev.hangoutLink||ev.htmlLink;
+        if(href){const a=document.createElement('a');a.className='result-link';a.href=href;a.target='_blank';a.rel='noopener';a.textContent=ev.hangoutLink?'Abrir Meet':'Abrir';r.appendChild(a)}
+        list.appendChild(r);
+      });
+    }catch(e){
+      state.calendar=false;tag.textContent='Activar';tag.className='tag warning';
+      list.innerHTML='<div class="empty"><b>Calendar todavía no está autorizado</b>Activá Google Calendar desde Integraciones.</div>';
+    }
+  }
   async function loadTasks(){
     const list=document.getElementById('taskList'), rem=document.getElementById('reminderList');
     try{
@@ -381,7 +420,30 @@
   });
   document.getElementById('reminderForm').addEventListener('submit',async e=>{
     e.preventDefault();const title=document.getElementById('reminderTitle').value.trim(),date=document.getElementById('reminderDate').value;if(!title||!date)return notify('Completá el texto y la fecha');
-    try{await api('/api/tasks',{method:'POST',body:JSON.stringify({title,due_at:new Date(date).toISOString()})});document.getElementById('reminderTitle').value='';document.getElementById('reminderDate').value='';notify('Recordatorio creado');loadTasks()}catch(err){notify(err.message)}
+    try{
+      const startAt=new Date(date).toISOString();
+      await api('/api/tasks',{method:'POST',body:JSON.stringify({title,due_at:startAt})});
+      if(state.calendar){
+        await api('/api/panel?resource=calendar',{method:'POST',body:JSON.stringify({summary:title,start_at:startAt})}).catch(()=>{});
+      }
+      document.getElementById('reminderTitle').value='';document.getElementById('reminderDate').value='';
+      notify(state.calendar?'Recordatorio creado en Azu y Calendar':'Recordatorio creado en Azu');
+      loadTasks();loadCalendar();
+    }catch(err){notify(err.message)}
+  });
+
+  document.getElementById('calendarEventForm').addEventListener('submit',async e=>{
+    e.preventDefault();
+    const title=document.getElementById('calendarTitle').value.trim();
+    const date=document.getElementById('calendarStart').value;
+    const withMeet=document.getElementById('calendarMeet').checked;
+    if(!title||!date)return notify('Completá el título y la fecha');
+    try{
+      await api('/api/panel?resource=calendar',{method:'POST',body:JSON.stringify({summary:title,start_at:new Date(date).toISOString(),with_meet:withMeet})});
+      document.getElementById('calendarTitle').value='';document.getElementById('calendarStart').value='';document.getElementById('calendarMeet').checked=false;
+      notify(withMeet?'Evento y Meet creados':'Evento creado en Calendar');
+      loadCalendar();
+    }catch(err){notify(err.message)}
   });
 
   async function loadMemories(){
@@ -455,7 +517,7 @@
 
   async function loadAll(){
     await Promise.allSettled([loadWorkspace(),loadGoogle(),loadTasks(),loadMemories(),loadActivity()]);
-    loadDocuments();
+    loadDocuments();loadCalendar();
     handleGoogleReturn();
   }
 
