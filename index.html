@@ -440,9 +440,23 @@
     catch(err){appendChat('No pude completar la acción: '+err.message)}
   });
 
+  function handleGoogleReturn(){
+    const params=new URLSearchParams(location.search);
+    const google=params.get('google');
+    if(!google)return;
+    if(google==='connected')notify('Google quedó conectado correctamente');
+    if(google==='error'){
+      const reason=params.get('reason')||'No pude conectar Google';
+      notify('Google necesita reconexión: '+reason);
+      go('integrations');
+    }
+    history.replaceState({},document.title,location.pathname);
+  }
+
   async function loadAll(){
     await Promise.allSettled([loadWorkspace(),loadGoogle(),loadTasks(),loadMemories(),loadActivity()]);
     loadDocuments();
+    handleGoogleReturn();
   }
 
   authStatus().then(ok=>ok?showApp():showLogin());
