@@ -29,3 +29,5 @@ Primero se prueba con un único workspace personal. El núcleo queda preparado p
 v0.1 — base del proyecto creada.
 
 - Google OAuth configuration pending validation.
+
+- Supabase resume retry hardening enabled.
